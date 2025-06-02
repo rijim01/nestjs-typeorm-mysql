@@ -1,16 +1,17 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable prettier/prettier */
-import { Body, Controller, DefaultValuePipe, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Search } from "@nestjs/common";
+import { Body, Controller, DefaultValuePipe, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from "@nestjs/common";
 import { UserService } from "../service/user.service";
 import { CreateUserDto } from "../dto/CreateUser.dto";
 import { UpdateUserDto } from "../dto/UpdateUser.dto";
 
 @Controller('users')
 export class UsersController {
-  constructor(private userService: UserService) {}
+  constructor(private readonly userService: UserService) {}
  
   @Post()
   async createUser(@Body() createUserDto : CreateUserDto) {
+  
     return this.userService.createUser(createUserDto)
   }
 
@@ -31,7 +32,7 @@ export class UsersController {
     return await this.userService.updateUser(id, updateUserDetails)
   }
 
-  @Delete('id') 
+  @Delete(':id') 
   async deleteUser(@Param('id',ParseIntPipe) id: number) {
     return this.userService.deleteUser(id)
   }

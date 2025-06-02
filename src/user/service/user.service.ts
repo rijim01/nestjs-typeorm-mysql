@@ -1,24 +1,42 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable prettier/prettier */
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "../entities/user.entity";
 import { Like, Repository } from "typeorm";
 import { CreateUserParams } from "src/utils/types";
 import { UpdateUserDto } from "../dto/UpdateUser.dto";
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectRepository(User) private userRepository: Repository<User>
+    @InjectRepository(User) 
+    private readonly userRepository: Repository<User>
   ){}
 
   async createUser(userDetails: CreateUserParams){
-    const newUser = this.userRepository.create(userDetails)
-    const savedUser = await this.userRepository.save(newUser)
+    const existingUser = await this.userRepository.findOne({
+      where: {email: userDetails.email}
+    });
 
-    return savedUser;
+    if(existingUser){
+      throw new ConflictException('Email already in use')
+    }
+
+    const hashedPassword = await bcrypt.hash(userDetails.password,10);
+
+    const user = this.userRepository.create({
+      ...userDetails, 
+      password: hashedPassword
+    })
+
+    const savedUser = await this.userRepository.save(user)
+    // Exclude password before returning response
+     const { password, ...result } = savedUser;
+
+     return result;
   }
 
   async findOneUser(id: number) {
